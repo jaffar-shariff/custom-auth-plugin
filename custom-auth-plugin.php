@@ -38,7 +38,6 @@ function custom_login_form_shortcode() {
     return $html;
 }
 add_shortcode('custom_login_form', 'custom_login_form_shortcode');
- HEAD
 
 // Shortcode to display registration form
 function custom_registration_form_shortcode() {
@@ -92,4 +91,3 @@ function custom_registration_form_shortcode() {
     return $html;
 }
 add_shortcode('custom_registration_form', 'custom_registration_form_shortcode');
- origin/main
