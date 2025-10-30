@@ -8,23 +8,40 @@ Author: Jaffar Shariff
 
 // Shortcode to display login form
 function custom_login_form_shortcode() {
- if (is_user_logged_in()) {
+    if (is_user_logged_in()) {
         return '<p>You are already logged in.</p>';
     }
 
     $html = '<form method="post">';
-    // Add nonce field here for security
     $html .= wp_nonce_field('custom_login_action', 'custom_login_nonce', true, false);
-
     $html .= '<p><label for="username">Username</label><br />';
-    $html .= '<input type="text" name="username" id="username" required /></p>';
+    $html .= '<input type="text" name="username" id="username" required placeholder="Enter your username" autocomplete="username" /></p>';
     $html .= '<p><label for="password">Password</label><br />';
-    $html .= '<input type="password" name="password" id="password" required /></p>';
+    $html .= '<input type="password" name="password" id="password" required placeholder="Enter your password" autocomplete="current-password" /></p>';
     $html .= '<p><input type="submit" name="custom_login_submit" value="Login" /></p>';
     $html .= '</form>';
 
+    // Frontend validation JS for login form
+    $html .= <<<EOD
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        const username = form.querySelector('input[name="username"]').value.trim();
+        const password = form.querySelector('input[name="password"]').value.trim();
+
+        if (username === '' || password === '') {
+            alert('Please fill out both username and password.');
+            e.preventDefault();
+        }
+    });
+});
+</script>
+EOD;
+
     if (isset($_POST['custom_login_submit'])) {
-        // Verify nonce before processing login
         if (!isset($_POST['custom_login_nonce']) || !wp_verify_nonce($_POST['custom_login_nonce'], 'custom_login_action')) {
             $html .= '<p style="color:red;">Invalid form submission detected.</p>';
             return $html;
@@ -57,16 +74,48 @@ function custom_registration_form_shortcode() {
     $html = '<form method="post">';
     $html .= wp_nonce_field('custom_register_action', 'custom_register_nonce', true, false);
     $html .= '<p><label for="reg_username">Username</label><br />';
-    $html .= '<input type="text" name="reg_username" id="reg_username" required /></p>';
+    $html .= '<input type="text" name="reg_username" id="reg_username" required placeholder="Choose a username" autocomplete="username" /></p>';
     $html .= '<p><label for="reg_email">Email</label><br />';
-    $html .= '<input type="email" name="reg_email" id="reg_email" required /></p>';
+    $html .= '<input type="email" name="reg_email" id="reg_email" required placeholder="Enter your email" autocomplete="email" /></p>';
     $html .= '<p><label for="reg_password">Password</label><br />';
-    $html .= '<input type="password" name="reg_password" id="reg_password" required /></p>';
+    $html .= '<input type="password" name="reg_password" id="reg_password" required placeholder="Set a password" autocomplete="new-password" /></p>';
     $html .= '<p><input type="submit" name="custom_register_submit" value="Register" /></p>';
     $html .= '</form>';
 
+    // Frontend validation JS for registration form
+    $html .= <<<EOD
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        const username = form.querySelector('input[name="reg_username"]').value.trim();
+        const email = form.querySelector('input[name="reg_email"]').value.trim();
+        const password = form.querySelector('input[name="reg_password"]').value.trim();
+
+        if (username.length < 3) {
+            alert('Username must be at least 3 characters.');
+            e.preventDefault();
+            return;
+        }
+        const emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+        if (!emailPattern.test(email)) {
+            alert('Please enter a valid email address.');
+            e.preventDefault();
+            return;
+        }
+        if (password.length < 6) {
+            alert('Password must be at least 6 characters.');
+            e.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+EOD;
+
     if (isset($_POST['custom_register_submit'])) {
-        // Verify nonce first
         if (!isset($_POST['custom_register_nonce']) || !wp_verify_nonce($_POST['custom_register_nonce'], 'custom_register_action')) {
             $html .= '<p style="color:red;">Invalid form submission detected.</p>';
             return $html;
@@ -106,6 +155,7 @@ function custom_registration_form_shortcode() {
     return $html;
 }
 add_shortcode('custom_registration_form', 'custom_registration_form_shortcode');
+
 // Shortcode for logout link
 function custom_logout_shortcode() {
     if (is_user_logged_in()) {
@@ -116,16 +166,16 @@ function custom_logout_shortcode() {
     }
 }
 add_shortcode('custom_logout', 'custom_logout_shortcode');
+
 // Shortcode to show password reset form
 function custom_password_reset_shortcode() {
-   if (is_user_logged_in()) {
+    if (is_user_logged_in()) {
         return '<p>You are logged in. No need to reset password.</p>';
     }
 
     ob_start();
 
     if (isset($_POST['custom_password_reset_email'])) {
-        // Verify nonce first
         if (!isset($_POST['custom_password_reset_nonce']) || !wp_verify_nonce($_POST['custom_password_reset_nonce'], 'custom_password_reset_action')) {
             echo '<p style="color:red;">Invalid form submission detected.</p>';
             return ob_get_clean();
@@ -143,10 +193,30 @@ function custom_password_reset_shortcode() {
     <form method="post">
         <?php wp_nonce_field('custom_password_reset_action', 'custom_password_reset_nonce', true, false); ?>
         <p><label for="custom_password_reset_email">Enter your email</label><br />
-        <input type="email" name="custom_password_reset_email" id="custom_password_reset_email" required /></p>
+        <input type="email" name="custom_password_reset_email" id="custom_password_reset_email" required placeholder="Enter your email" autocomplete="email" /></p>
         <p><input type="submit" value="Reset Password" /></p>
     </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        if (!form) return;
+
+        form.addEventListener('submit', function(e) {
+            const emailInput = form.querySelector('input[name="custom_password_reset_email"]');
+            if (!emailInput) return;
+
+            const email = emailInput.value.trim();
+            const emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+
+            if (!emailPattern.test(email)) {
+                alert('Please enter a valid email address.');
+                e.preventDefault();
+            }
+        });
+    });
+    </script>
     <?php
+
     return ob_get_clean();
 }
 add_shortcode('custom_password_reset', 'custom_password_reset_shortcode');
