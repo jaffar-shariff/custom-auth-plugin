@@ -91,3 +91,43 @@ function custom_registration_form_shortcode() {
     return $html;
 }
 add_shortcode('custom_registration_form', 'custom_registration_form_shortcode');
+// Shortcode for logout link
+function custom_logout_shortcode() {
+    if (is_user_logged_in()) {
+        $logout_url = wp_logout_url(home_url());
+        return '<a href="' . esc_url($logout_url) . '">Logout</a>';
+    } else {
+        return '<p>You are not logged in.</p>';
+    }
+}
+add_shortcode('custom_logout', 'custom_logout_shortcode');
+// Shortcode to show password reset form
+function custom_password_reset_shortcode() {
+    if (is_user_logged_in()) {
+        return '<p>You are logged in. No need to reset password.</p>';
+    }
+    
+    ob_start();
+
+    if (isset($_POST['custom_password_reset_email'])) {
+        $email = sanitize_email($_POST['custom_password_reset_email']);
+        if (!email_exists($email)) {
+            echo '<p style="color:red;">Email does not exist in our records.</p>';
+        } else {
+            // Use WordPress function to send reset link
+            retrieve_password($email);
+            echo '<p style="color:green;">Password reset instructions sent to your email.</p>';
+        }
+    }
+
+    ?>
+    <form method="post">
+        <p><label for="custom_password_reset_email">Enter your email</label><br />
+        <input type="email" name="custom_password_reset_email" id="custom_password_reset_email" required /></p>
+        <p><input type="submit" value="Reset Password" /></p>
+    </form>
+    <?php
+
+    return ob_get_clean();
+}
+add_shortcode('custom_password_reset', 'custom_password_reset_shortcode');
