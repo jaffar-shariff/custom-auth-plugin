@@ -114,12 +114,10 @@ function custom_password_reset_shortcode() {
         if (!email_exists($email)) {
             echo '<p style="color:red;">Email does not exist in our records.</p>';
         } else {
-            // Use WordPress function to send reset link
             retrieve_password($email);
             echo '<p style="color:green;">Password reset instructions sent to your email.</p>';
         }
     }
-
     ?>
     <form method="post">
         <p><label for="custom_password_reset_email">Enter your email</label><br />
@@ -127,7 +125,12 @@ function custom_password_reset_shortcode() {
         <p><input type="submit" value="Reset Password" /></p>
     </form>
     <?php
-
     return ob_get_clean();
 }
 add_shortcode('custom_password_reset', 'custom_password_reset_shortcode');
+
+// Enqueue plugin CSS
+function custom_auth_plugin_enqueue_styles() {
+    wp_enqueue_style('custom-auth-style', plugin_dir_url(__FILE__) . 'style.css');
+}
+add_action('wp_enqueue_scripts', 'custom_auth_plugin_enqueue_styles');
