@@ -8,11 +8,14 @@ Author: Jaffar Shariff
 
 // Shortcode to display login form
 function custom_login_form_shortcode() {
-    if (is_user_logged_in()) {
+ if (is_user_logged_in()) {
         return '<p>You are already logged in.</p>';
     }
 
     $html = '<form method="post">';
+    // Add nonce field here for security
+    $html .= wp_nonce_field('custom_login_action', 'custom_login_nonce', true, false);
+
     $html .= '<p><label for="username">Username</label><br />';
     $html .= '<input type="text" name="username" id="username" required /></p>';
     $html .= '<p><label for="password">Password</label><br />';
@@ -21,6 +24,12 @@ function custom_login_form_shortcode() {
     $html .= '</form>';
 
     if (isset($_POST['custom_login_submit'])) {
+        // Verify nonce before processing login
+        if (!isset($_POST['custom_login_nonce']) || !wp_verify_nonce($_POST['custom_login_nonce'], 'custom_login_action')) {
+            $html .= '<p style="color:red;">Invalid form submission detected.</p>';
+            return $html;
+        }
+
         $user = wp_signon([
             'user_login'    => sanitize_text_field($_POST['username']),
             'user_password' => sanitize_text_field($_POST['password']),
@@ -46,6 +55,7 @@ function custom_registration_form_shortcode() {
     }
 
     $html = '<form method="post">';
+    $html .= wp_nonce_field('custom_register_action', 'custom_register_nonce', true, false);
     $html .= '<p><label for="reg_username">Username</label><br />';
     $html .= '<input type="text" name="reg_username" id="reg_username" required /></p>';
     $html .= '<p><label for="reg_email">Email</label><br />';
@@ -56,6 +66,12 @@ function custom_registration_form_shortcode() {
     $html .= '</form>';
 
     if (isset($_POST['custom_register_submit'])) {
+        // Verify nonce first
+        if (!isset($_POST['custom_register_nonce']) || !wp_verify_nonce($_POST['custom_register_nonce'], 'custom_register_action')) {
+            $html .= '<p style="color:red;">Invalid form submission detected.</p>';
+            return $html;
+        }
+
         $username = sanitize_user($_POST['reg_username']);
         $email    = sanitize_email($_POST['reg_email']);
         $password = sanitize_text_field($_POST['reg_password']);
@@ -87,7 +103,6 @@ function custom_registration_form_shortcode() {
             }
         }
     }
-
     return $html;
 }
 add_shortcode('custom_registration_form', 'custom_registration_form_shortcode');
@@ -103,13 +118,19 @@ function custom_logout_shortcode() {
 add_shortcode('custom_logout', 'custom_logout_shortcode');
 // Shortcode to show password reset form
 function custom_password_reset_shortcode() {
-    if (is_user_logged_in()) {
+   if (is_user_logged_in()) {
         return '<p>You are logged in. No need to reset password.</p>';
     }
-    
+
     ob_start();
 
     if (isset($_POST['custom_password_reset_email'])) {
+        // Verify nonce first
+        if (!isset($_POST['custom_password_reset_nonce']) || !wp_verify_nonce($_POST['custom_password_reset_nonce'], 'custom_password_reset_action')) {
+            echo '<p style="color:red;">Invalid form submission detected.</p>';
+            return ob_get_clean();
+        }
+
         $email = sanitize_email($_POST['custom_password_reset_email']);
         if (!email_exists($email)) {
             echo '<p style="color:red;">Email does not exist in our records.</p>';
@@ -120,6 +141,7 @@ function custom_password_reset_shortcode() {
     }
     ?>
     <form method="post">
+        <?php wp_nonce_field('custom_password_reset_action', 'custom_password_reset_nonce', true, false); ?>
         <p><label for="custom_password_reset_email">Enter your email</label><br />
         <input type="email" name="custom_password_reset_email" id="custom_password_reset_email" required /></p>
         <p><input type="submit" value="Reset Password" /></p>
